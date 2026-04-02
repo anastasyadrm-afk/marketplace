@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beauty & Wellness — Our Collection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Jost', sans-serif;
+      background: #faf9f7;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 3rem 2rem;
+    }
+
+    header {
+      max-width: 1100px;
+      margin: 0 auto 2.5rem;
+    }
+
+    header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 42px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: #1a1a1a;
+      margin-bottom: 0.25rem;
+    }
+
+    header p {
+      font-size: 12px;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #888;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 0.5px solid #e0ddd8;
+      border-radius: 14px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      border-color: #c0bdb8;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .card:hover .img-wrap img {
+      transform: scale(1.04);
+    }
+
+    .img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* When using a real <img> tag, it will fill this area */
+    .img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+      display: block;
+    }
+
+    /* Placeholder shown when no image is set */
+    .img-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 100%;
+    }
+
+    .img-placeholder .emoji {
+      font-size: 52px;
+      line-height: 1;
+    }
+
+    .img-placeholder span.label {
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    .card-body {
+      padding: 14px 18px 18px;
+    }
+
+    .card-category {
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 4px;
+    }
+
+    .card-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px;
+      font-weight: 500;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .price-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .old-price {
+      font-size: 12px;
+      color: #bbb;
+      text-decoration: line-through;
+    }
+
+    .card-price {
+      font-size: 15px;
+      font-weight: 500;
+      color: #1a1a1a;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      padding: 3px 9px;
+      border-radius: 20px;
+    }
+
+    .badge-new  { background: #EAF3DE; color: #3B6D11; }
+    .badge-best { background: #FAEEDA; color: #854F0B; }
+    .badge-sale { background: #FCEBEB; color: #A32D2D; }
+
+    footer {
+      max-width: 1100px;
+      margin: 3rem auto 0;
+      border-top: 0.5px solid #e0ddd8;
+      padding-top: 1.5rem;
+      font-size: 12px;
+      color: #bbb;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Our Collection</h1>
+    <p>Beauty &amp; Wellness</p>
+  </header>
+
+  <div class="grid" id="product-grid"></div>
+
+  <footer>
+    &copy; 2026 Your Store Name. All rights reserved.
+  </footer>
+
+  <script>
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSffr4f5iWs-j1WwEVlVHS5P-akpR1xFw6Nhz-B7mtRSBf3iBD2r63Uq5aa1v5e51z6xqLIpkJ1_ywj/pub?output=csv';
+
+    const grid = document.getElementById('product-grid');
+
+    /* ---- CSV parser (handles quoted fields with commas inside) ---- */
+    function parseCSV(text) {
+      const lines = text.trim().split('\n');
+      const headers = splitRow(lines[0]);
+      return lines.slice(1).map(line => {
+        const values = splitRow(line);
+        const obj = {};
+        headers.forEach((h, i) => { obj[h.trim()] = (values[i] || '').trim(); });
+        return obj;
+      }).filter(row => row.name);
+    }
+
+    function splitRow(row) {
+      const result = [];
+      let cur = '', inQuote = false;
+      for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+        if (ch === '"') { inQuote = !inQuote; }
+        else if (ch === ',' && !inQuote) { result.push(cur); cur = ''; }
+        else { cur += ch; }
+      }
+      result.push(cur);
+      return result;
+    }
+
+    /* ---- Render one card ---- */
+    function renderCard(p) {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const imageContent = p.image
+        ? `<img src="${p.image}" alt="${p.name}" />`
+        : `<div class="img-placeholder" style="background:${p.bg || '#f5f5f5'};">
+             <span class="emoji">${p.emoji || '🛍️'}</span>
+             <span class="label">Your image here</span>
+           </div>`;
+
+      const badgeKey = (p.badge || '').toLowerCase();
+      const badgeHtml = badgeKey
+        ? `<span class="badge badge-${badgeKey}">${p.badgeLabel || p.badge}</span>`
+        : `<span></span>`;
+
+      const priceHtml = p.oldPrice
+        ? `<span class="old-price">${p.oldPrice}</span><span class="card-price">${p.price}</span>`
+        : `<span class="card-price">${p.price}</span>`;
+
+      card.innerHTML = `
+        <div class="img-wrap">${imageContent}</div>
+        <div class="card-body">
+          <p class="card-category">${p.category}</p>
+          <p class="card-name">${p.name}</p>
+          <div class="card-footer">
+            <div class="price-wrap">${priceHtml}</div>
+            ${badgeHtml}
+          </div>
+        </div>
+      `;
+
+      grid.appendChild(card);
+    }
+
+    /* ---- Show loading / error states ---- */
+    function showMessage(msg, isError) {
+      grid.innerHTML = `<p style="grid-column:1/-1;color:${isError ? '#A32D2D' : '#aaa'};font-size:13px;letter-spacing:0.05em;">${msg}</p>`;
+    }
+
+    /* ---- Fetch & render ---- */
+    async function loadProducts() {
+      showMessage('Loading products…', false);
+      try {
+        const res = await fetch(SHEET_CSV_URL);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const products = parseCSV(text);
+        if (!products.length) { showMessage('No products found in sheet.', true); return; }
+        grid.innerHTML = '';
+        products.forEach(renderCard);
+      } catch (err) {
+        showMessage(`Could not load products. Check the sheet URL or your connection. (${err.message})`, true);
+      }
+    }
+
+    loadProducts();
+  </script>
+
+</body>
+</html>
